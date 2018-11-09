@@ -141,11 +141,38 @@ class Router:
         #save neighbors and interfeces on which we connect to them
         self.cost_D = cost_D    # {neighbor: {interface: cost}}
         #TODO: set up the routing table for connected hosts
-        self.rt_tbl_D = {}      # {destination: {router: cost}}
+        if (self.name=='RA'):
+            #TODO: Value for H2
+            self.rt_tbl_D = {'H1':{'RA': cost_D['H1'][0]}, 'RB':{'RA': cost_D['RB'][1]}, 'H2':{'RA':cost_D['RB'][1]}, 'RA':{'RA':0}}      # {destination: {router: cost}}
+        else:
+            #TODO: Value for H1
+            self.rt_tbl_D = {'H1':{'RB': cost_D['RA'][0]}, 'RA':{'RB': cost_D['RA'][0]}, 'H2':{'RB':cost_D['H2'][1]}, 'RB':{'RB':0}}
         print('%s: Initialized routing table' % self)
         self.print_routes()
-
-
+    
+        
+    ## Print routing table
+    def print_routes(self):
+        #TODO: print the routes as a two dimensional table
+        print(" ________________________________")
+        print("| %s |" % (self.name), end =" ")
+        print("  H1 |", end=" ")
+        print("  H2 |", end=" ")
+        print("  RA |", end=" ")
+        print("  RB |")
+        print(" ________________________________")
+        print("| %s |" % self.name, end =" ")
+        print("  %d  |" % self.rt_tbl_D['H1'][self.name], end=" ")
+        print("  %d  |" % self.rt_tbl_D['H2'][self.name], end=" ")
+        print("  %d  |" % self.rt_tbl_D['RA'][self.name], end=" ")
+        print("  %d  |" % self.rt_tbl_D['RB'][self.name])
+        print(" ________________________________")
+##        print("| RB |", end =" ")
+##        print("  %d |" % self.rt_tbl_D['H1'][self.name], end=" ")
+##        print("  %d |" % self.rt_tbl_D['H2'][self.name], end=" ")
+##        print("  %d |" % self.rt_tbl_D['RA'][self.name], end=" ")
+##        print("  %d |" % self.rt_tbl_D['RB'][self.name])
+    
     ## called when printing the object
     def __str__(self):
         return self.name
@@ -205,12 +232,6 @@ class Router:
         #TODO: add logic to update the routing tables and
         # possibly send out routing updates
         print('%s: Received routing update %s from interface %d' % (self, p, i))
-
-        
-    ## Print routing table
-    def print_routes(self):
-        #TODO: print the routes as a two dimensional table
-        print(self.rt_tbl_D)
 
                 
     ## thread target for the host to keep forwarding data

@@ -72,4 +72,3 @@ class LinkLayer:
             if self.stop:
                 print (threading.currentThread().getName() + ': Ending')
                 return
-    

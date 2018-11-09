@@ -68,4 +68,3 @@ if __name__ == '__main__':
         t.join()
         
     print("All simulation threads joined")
-
