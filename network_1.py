@@ -143,10 +143,10 @@ class Router:
         #TODO: set up the routing table for connected hosts
         if (self.name=='RA'):
             #TODO: Value for H2
-            self.rt_tbl_D = {'H1':{'RA': cost_D['H1'][0]}, 'RB':{'RA': cost_D['RB'][1]}, 'H2':{'RA':float("inf")}, 'RA':{'RA':0}, 'H1B':{'RB': float("inf")}, 'RBB':{'RB': float("inf")}, 'H2B':{'RB':float("inf")}, 'RAB':{'RB':float("inf")}}      # {destination: {router: cost}}
+            self.rt_tbl_D = {'H1':{'RA': cost_D['H1'][0]}, 'RB':{'RA': cost_D['RB'][1]}, 'H2':{'RA':float("inf")}, 'RA':{'RA':0}, 'H1A':{'RB': float("inf")}, 'RBA':{'RB': float("inf")}, 'H2A':{'RB':float("inf")}, 'RAA':{'RB':float("inf")}}      # {destination: {router: cost}}
         else:
             #TODO: Value for H1
-            self.rt_tbl_D = {'H1':{'RB': float("inf")}, 'RA':{'RB': cost_D['RA'][0]}, 'H2':{'RB':cost_D['H2'][1]}, 'RB':{'RB':0}, 'H1A':{'RA': float("inf")}, 'RAA':{'RA': float("inf")}, 'H2A':{'RA':float("inf")}, 'RBA':{'RA':float("inf")}}
+            self.rt_tbl_D = {'H1A':{'RB': float("inf")}, 'RAA':{'RB': cost_D['RA'][0]}, 'H2A':{'RB':cost_D['H2'][1]}, 'RBA':{'RB':0}, 'H1':{'RA': float("inf")}, 'RA':{'RA': float("inf")}, 'H2':{'RA':float("inf")}, 'RB':{'RA':float("inf")}}
         print('%s: Initialized routing table' % self)
         
         self.print_routes()
@@ -170,24 +170,24 @@ class Router:
             print("  %0.f   |" % self.rt_tbl_D['RB'][self.name])
             print(" _____________________________________")
             print("| RB |", end =" ")
-            print("  %0.f   |" % self.rt_tbl_D['H1B']["RB"], end=" ")
-            print("  %0.f   |" % self.rt_tbl_D['H2B']["RB"], end=" ")
-            print("  %0.f   |" % self.rt_tbl_D['RAB']["RB"], end=" ")
-            print("  %0.f   |" % self.rt_tbl_D['RBB']["RB"])
+            print("  %0.f   |" % self.rt_tbl_D['H1A']["RB"], end=" ")
+            print("  %0.f   |" % self.rt_tbl_D['H2A']["RB"], end=" ")
+            print("  %0.f   |" % self.rt_tbl_D['RAA']["RB"], end=" ")
+            print("  %0.f   |" % self.rt_tbl_D['RBA']["RB"])
             print(" _____________________________________")
         else:
             print(" ______________________________________")
             print("| RA |", end =" ")
-            print("  %0.f   |" % self.rt_tbl_D['H1A']["RA"], end=" ")
-            print("  %0.f   |" % self.rt_tbl_D['H2A']["RA"], end=" ")
-            print("  %0.f   |" % self.rt_tbl_D['RAA']["RA"], end=" ")
-            print("  %0.f   |" % self.rt_tbl_D['RBA']["RA"])
+            print("  %0.f   |" % self.rt_tbl_D['H1']["RA"], end=" ")
+            print("  %0.f   |" % self.rt_tbl_D['H2']["RA"], end=" ")
+            print("  %0.f   |" % self.rt_tbl_D['RA']["RA"], end=" ")
+            print("  %0.f   |" % self.rt_tbl_D['RB']["RA"])
             print(" _____________________________________")
             print("| RB |", end =" ")
-            print("  %0.f   |" % self.rt_tbl_D['H1'][self.name], end=" ")
-            print("  %0.f   |" % self.rt_tbl_D['H2'][self.name], end=" ")
-            print("  %0.f   |" % self.rt_tbl_D['RA'][self.name], end=" ")
-            print("  %0.f   |" % self.rt_tbl_D['RB'][self.name])
+            print("  %0.f   |" % self.rt_tbl_D['H1A'][self.name], end=" ")
+            print("  %0.f   |" % self.rt_tbl_D['H2A'][self.name], end=" ")
+            print("  %0.f   |" % self.rt_tbl_D['RAA'][self.name], end=" ")
+            print("  %0.f   |" % self.rt_tbl_D['RBA'][self.name])
             print(" _____________________________________")
     
     ## called when printing the object
@@ -235,16 +235,17 @@ class Router:
         # TODO: Send out a routing table update
         #create a routing table update packet
         #Definitely wrong but maybe in the right idea
-        p = NetworkPacket(0, 'control', 'UPDATE ROUTING TABLES')
         try:
-
-            for j in range(4): #For all destinations
-                print(j)
+            #for j in range(4): #For all destinations
+             #   print(j)
                 
             for j in range(len(self.cost_D)): #For all neighbors 
-                self.rt_tbl_D[list(self.cost_D.keys())[j]]={self.name: 2}
+                self.rt_tbl_D[list(self.cost_D.keys())[j]]={self.name: list(self.cost_D.keys())[j]}
                 
-            for j in range(len(self.cost_D)): #For all neighbors 
+            for j in range(len(self.cost_D)): #For all neighbors
+                n=list(self.cost_D.keys())[j]
+                print(n)
+                p = NetworkPacket(self.rt_tbl_D[n][self.name], 'control', 'UPDATE ROUTING TABLES')
                 print('%s: sending routing update "%s" from interface %d' % (self, p, i))
                 self.intf_L[i].put(p.to_byte_S(), 'out', True)
                 
@@ -260,18 +261,20 @@ class Router:
         # possibly send out routing updates
         print('%s: Received routing update %s from interface %d' % (self, p, i))
         while True:
-            
-            #TODO:WAIT?
-            
-            #Definitely wrong but maybe in the right idea
-            
-            for j in range(len(self.cost_D)):
-                x=self.rt_tbl_D[list(self.cost_D.keys())[j]]
-                #self.rt_tbl_D[list(self.cost_D.keys())[j]]=min{}#Something
-                
-                if x!= self.rt_tbl_D[list(self.cost_D.keys())[j]]:
-                    print('%s: sending routing update "%s" from interface %d' % (self, p, i))
-                    self.intf_L[i].put(p.to_byte_S(), 'out', True)
+            pkt_S = self.intf_L[i].get('in')
+            if pkt_S is not None:
+                #Definitely wrong but maybe in the right idea
+                for j in range(len(self.cost_D)):
+                    x=self.rt_tbl_D[list(self.cost_D.keys())[j]]
+                    #TODO: BELLMAN-FORD ALGORITHM
+                    #self.rt_tbl_D[list(self.cost_D.keys())[j]]=min{}#Something
+                    
+                    if x!= self.rt_tbl_D[list(self.cost_D.keys())[j]]:
+                        print('%s: sending routing update "%s" from interface %d' % (self, p, i))
+                        self.intf_L[i].put(p.to_byte_S(), 'out', True)
+            else:
+                self.print_routes()
+                return
             
     ## thread target for the host to keep forwarding data
     def run(self):
