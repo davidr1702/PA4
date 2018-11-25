@@ -226,7 +226,11 @@ class Router:
             j = list(self.rt_tbl_D.get(str(p.dst)).values())[0]
             if j == 100 and i == 0:
                 j = 1
-            self.intf_L[j].put(p.to_byte_S(), 'out', True)
+            try:
+                self.intf_L[j].put(p.to_byte_S(), 'out', True)
+            except:
+                j = 0
+                self.intf_L[j].put(p.to_byte_S(), 'out', True)
             print('%s: forwarding packet "%s" from interface %d to %d' % \
                 (self, p, i, j))
         except queue.Full:
