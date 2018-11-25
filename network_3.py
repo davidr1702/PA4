@@ -247,10 +247,13 @@ class Router:
             # TODO: Here you will need to implement a lookup into the 
             # forwarding table to find the appropriate outgoing interface
             # for now we assume the outgoing interface is 1
-            
-            self.intf_L[1].put(p.to_byte_S(), 'out', True)
+
+            j = list(self.rt_tbl_D.get(str(p.dst)).values())[0]
+            if j == 100 and i == 0:
+                j = 1
+            self.intf_L[j].put(p.to_byte_S(), 'out', True)
             print('%s: forwarding packet "%s" from interface %d to %d' % \
-                (self, p, i, 1))
+                  (self, p, i, j))
         except queue.Full:
             print('%s: packet "%s" lost on interface %d' % (self, p, i))
             pass
