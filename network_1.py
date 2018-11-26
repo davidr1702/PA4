@@ -164,35 +164,19 @@ class Router:
         print("  H2   |", end=" ")
         print("  RA   |", end=" ")
         print("  RB   |")
-        if (self.name=='RA'):
-            print(" ______________________________________")
-            print("| RA |", end =" ")
-            print("  %d   |" % self.rt_tbl_D['H1'][self.name], end=" ")
-            print("  %d   |" % self.rt_tbl_D['H2'][self.name], end=" ")
-            print("  %d   |" % self.rt_tbl_D['RA'][self.name], end=" ")
-            print("  %d   |" % self.rt_tbl_D['RB'][self.name])
-            print(" _____________________________________")
-            print("| RB |", end =" ")
-            print("  %d   |" % self.rt_tb2_D['H1']["RB"], end=" ")
-            print("  %d   |" % self.rt_tb2_D['H2']["RB"], end=" ")
-            print("  %d   |" % self.rt_tb2_D['RA']["RB"], end=" ")
-            print("  %d   |" % self.rt_tb2_D['RB']["RB"])
-            print(" _____________________________________")
-        else:
-            print(" ______________________________________")
-            print("| RA |", end =" ")
-            print("  %d   |" % self.rt_tbl_D['H1']["RA"], end=" ")
-            print("  %d   |" % self.rt_tbl_D['H2']["RA"], end=" ")
-            print("  %d   |" % self.rt_tbl_D['RA']["RA"], end=" ")
-            print("  %d   |" % self.rt_tbl_D['RB']["RA"])
-            print(" _____________________________________")
-            print("| RB |", end =" ")
-            print("  %d   |" % self.rt_tb2_D['H1'][self.name], end=" ")
-            print("  %d   |" % self.rt_tb2_D['H2'][self.name], end=" ")
-            print("  %d   |" % self.rt_tb2_D['RA'][self.name], end=" ")
-            print("  %d   |" % self.rt_tb2_D['RB'][self.name])
-            print(" _____________________________________")
-
+        print(" ______________________________________")
+        print("| RA |", end =" ")
+        print("  %d   |" % self.rt_tbl_D['H1']['RA'], end=" ")
+        print("  %d   |" % self.rt_tbl_D['H2']['RA'], end=" ")
+        print("  %d   |" % self.rt_tbl_D['RA']['RA'], end=" ")
+        print("  %d   |" % self.rt_tbl_D['RB']['RA'])
+        print(" _____________________________________")
+        print("| RB |", end =" ")
+        print("  %d   |" % self.rt_tb2_D['H1']['RB'], end=" ")
+        print("  %d   |" % self.rt_tb2_D['H2']['RB'], end=" ")
+        print("  %d   |" % self.rt_tb2_D['RA']['RB'], end=" ")
+        print("  %d   |" % self.rt_tb2_D['RB']['RB'])
+        print(" _____________________________________")
 
     ## called when printing the object
     def __str__(self):
@@ -254,7 +238,7 @@ class Router:
                 
             for j in range(len(self.rt_tbl_D)): # For all destinations
                 n=list(self.rt_tbl_D.keys())[j]
-                p = NetworkPacket(self.rt_tbl_D[n][self.name], 'control', n)
+                p = NetworkPacket(self.rt_tbl_D[n][self.name], 'control', self.name+n)
                 try:
                     print('%s: sending routing update "%s" from interface %d' % (self, p, i))
                     self.intf_L[i].put(p.to_byte_S(), 'out', True)
@@ -268,7 +252,6 @@ class Router:
                     self.rt_tb2_D[n][self.name]=0
                 else:
                     self.rt_tb2_D[n][self.name]=100
-                
             for j in range(len(self.cost_D)): # For each neighbors
                 n=list(self.cost_D.keys())[j]
                 interface=list(self.cost_D[n].keys())[0]
@@ -276,7 +259,7 @@ class Router:
                 
             for j in range(len(self.rt_tbl_D)): # For all destinations
                 n=list(self.rt_tb2_D.keys())[j]
-                p = NetworkPacket(self.rt_tb2_D[n][self.name], 'control', n)
+                p = NetworkPacket(self.rt_tb2_D[n][self.name], 'control', self.name+n)
                 try:
                     print('%s: sending routing update "%s" from interface %d' % (self, p, i))
                     self.intf_L[i].put(p.to_byte_S(), 'out', True)
@@ -292,7 +275,7 @@ class Router:
         # possibly send out routing updates
         print('%s: Received routing update %s from interface %d' % (self, p, i))
         while True:
-            pkt_S = None
+            #pkt_S = None
             #get packet from interface i
             pkt_S = self.intf_L[i].get('in')
             #if packet exists make a forwarding decision
@@ -301,51 +284,41 @@ class Router:
                    if (self.name=='RB'):
                        n=list(self.rt_tb2_D.keys())[j]
                        x=self.rt_tb2_D[n]['RB']
-                       if(p.data_S==n):
+                       self.rt_tbl_D['RB']['RA']=self.rt_tb2_D['RA']['RB']
+                       na, destiny= p.data_S[:len(p.data_S)//2], p.data_S[len(p.data_S)//2:]
+                       if(destiny==n):
                            y1=int(p.dst)+self.rt_tb2_D['RA'][self.name]
-                           #self.rt_tbl_D[n]['RA']=int(p.dst)
                            self.rt_tb2_D[n]['RB']=min(y1, self.rt_tb2_D[n]['RB'])
                            
                            if (x!=self.rt_tb2_D[n]['RB']):
                                for j in range(len(self.rt_tb2_D)): # For all destinations
-                                   p = NetworkPacket(self.rt_tb2_D[n][self.name], 'control', n)
+                                   p = NetworkPacket(self.rt_tb2_D[n][self.name], 'control', self.name+n)
                                    try:
                                        print('%s: sending routing update "%s" from interface %d' % (self, p, i))
                                        self.intf_L[i].put(p.to_byte_S(), 'out', True)
                                    except queue.Full:
                                        print('%s: packet "%s" lost on interface %d' % (self, p, i))
                                        pass
-##                               p = NetworkPacket(self.rt_tb2_D[n]['RB'], 'control', n)
-##                               try:
-##                                   print('%s: sending routing update "%s" from interface %d' % (self, p, i))
-##                                   self.intf_L[i].put(p.to_byte_S(), 'out', True)
-##                               except queue.Full:
-##                                   print('%s: packet "%s" lost on interface %d' % (self, p, i))
-##                                   pass
+
                             
                    else:
                        n=list(self.rt_tbl_D.keys())[j]
                        x=self.rt_tbl_D[n]['RA']
-                       if(p.data_S==n):
+                       self.rt_tb2_D['RA']['RB']=self.rt_tbl_D['RB']['RA']
+                       na, destiny= p.data_S[:len(p.data_S)//2], p.data_S[len(p.data_S)//2:]
+                       if(destiny==n):
                            y1=int(p.dst)+self.rt_tbl_D['RB'][self.name]
-                           #self.rt_tb2_D[n]['RB']=int(p.dst)
                            self.rt_tbl_D[n]['RA']=min(y1, self.rt_tbl_D[n]['RA'])
                            if (x!=self.rt_tbl_D[n]['RA']):
-                               for j in range(len(self.rt_tb1_D)): # For all destinations
-                                   p = NetworkPacket(self.rt_tb1_D[n][self.name], 'control', n)
-                                   try:
-                                       print('%s: sending routing update "%s" from interface %d' % (self, p, i))
-                                       self.intf_L[i].put(p.to_byte_S(), 'out', True)
-                                   except queue.Full:
-                                       print('%s: packet "%s" lost on interface %d' % (self, p, i))
-                                       pass
-##                               p = NetworkPacket(self.rt_tb1_D[n]['RA'], 'control', n)
-##                               try:
-##                                   print('%s: sending routing update "%s" from interface %d' % (self, p, i))
-##                                   self.intf_L[i].put(p.to_byte_S(), 'out', True)
-##                               except queue.Full:
-##                                   print('%s: packet "%s" lost on interface %d' % (self, p, i))
-##                                   pass
+                               for j in range(len(self.rt_tbl_D)): # For all destinations
+                                    p = NetworkPacket(self.rt_tbl_D[n][self.name], 'control', self.name+n)
+                                    try:
+                                        print('%s: sending routing update "%s" from interface %d' % (self, p, i))
+                                        self.intf_L[i].put(p.to_byte_S(), 'out', True)
+                                    except queue.Full:
+                                        print('%s: packet "%s" lost on interface %d' % (self, p, i))
+                                        pass
+
             else:
                 return
         
